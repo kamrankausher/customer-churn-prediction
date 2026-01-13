@@ -5,16 +5,16 @@ import joblib
 import os
 
 # --------------------------------------------------
-# Resolve absolute paths (works locally + Render)
+# Get project root directory (Render-safe)
 # --------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_DIR = os.path.join(BASE_DIR, "..", "models")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
 
 PREPROCESSOR_PATH = os.path.join(MODEL_DIR, "preprocessor.pkl")
 MODEL_PATH = os.path.join(MODEL_DIR, "random_forest.pkl")
 
 # --------------------------------------------------
-# Load artifacts
+# Load ML artifacts
 # --------------------------------------------------
 preprocessor = joblib.load(PREPROCESSOR_PATH)
 model = joblib.load(MODEL_PATH)
@@ -24,7 +24,6 @@ model = joblib.load(MODEL_PATH)
 # --------------------------------------------------
 app = FastAPI(
     title="Customer Churn Prediction API",
-    description="Predict customer churn probability using ML",
     version="1.0"
 )
 
@@ -64,15 +63,11 @@ def root():
 # --------------------------------------------------
 @app.post("/predict")
 def predict_churn(customer: CustomerData):
-    # Convert input to DataFrame
     input_df = pd.DataFrame([customer.dict()])
+    processed = preprocessor.transform(input_df)
 
-    # Apply preprocessing
-    processed_data = preprocessor.transform(input_df)
-
-    # Predict
-    prediction = model.predict(processed_data)[0]
-    probability = model.predict_proba(processed_data)[0][1]
+    prediction = model.predict(processed)[0]
+    probability = model.predict_proba(processed)[0][1]
 
     return {
         "churn_prediction": int(prediction),
