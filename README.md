@@ -132,7 +132,7 @@ Response Example:
 
 ## 🌐 Live Demo
 
-👉 https://customer-churn-prediction.streamlit.app
+👉 https://customer-churn-prediction-m8r9yq7vi89d94a5srrj6e.streamlit.app/
 
 
 ## 👨‍💻 Author
