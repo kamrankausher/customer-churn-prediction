@@ -128,12 +128,12 @@ Response Example:
 
 ---
 
-## 📌 Deployment Status
+## 📌 Deployment 
 
-- The project currently runs locally
-- Can be deployed on cloud platforms (Render, Streamlit Cloud) for public access
+## 🌐 Live Demo
 
----
+👉 https://customer-churn-prediction.streamlit.app
+
 
 ## 👨‍💻 Author
 
