@@ -1,12 +1,31 @@
 import streamlit as st
-import requests
+import pandas as pd
+import joblib
+import os
 
-st.set_page_config(page_title="Customer Churn Predictor", layout="centered")
+# --------------------------------------------------
+# Page config
+# --------------------------------------------------
+st.set_page_config(
+    page_title="Customer Churn Predictor",
+    layout="centered"
+)
 
 st.title("📉 Customer Churn Prediction")
 st.write("Enter customer details to predict churn probability.")
 
-# --- Input fields ---
+# --------------------------------------------------
+# Load model & preprocessor safely
+# --------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+
+preprocessor = joblib.load(os.path.join(MODELS_DIR, "preprocessor.pkl"))
+model = joblib.load(os.path.join(MODELS_DIR, "random_forest.pkl"))
+
+# --------------------------------------------------
+# Input fields
+# --------------------------------------------------
 gender = st.selectbox("Gender", ["Male", "Female"])
 SeniorCitizen = st.selectbox("Senior Citizen", [0, 1])
 Partner = st.selectbox("Partner", ["Yes", "No"])
@@ -38,9 +57,11 @@ PaymentMethod = st.selectbox(
 MonthlyCharges = st.number_input("Monthly Charges", value=70.0)
 TotalCharges = st.number_input("Total Charges", value=1000.0)
 
-# --- Prediction ---
+# --------------------------------------------------
+# Prediction
+# --------------------------------------------------
 if st.button("Predict Churn"):
-    payload = {
+    input_data = pd.DataFrame([{
         "gender": gender,
         "SeniorCitizen": SeniorCitizen,
         "Partner": Partner,
@@ -60,23 +81,16 @@ if st.button("Predict Churn"):
         "PaymentMethod": PaymentMethod,
         "MonthlyCharges": MonthlyCharges,
         "TotalCharges": TotalCharges,
-    }
+    }])
 
-    response = requests.post(
-        "http://127.0.0.1:8000/predict",
-        json=payload
-    )
+    processed_data = preprocessor.transform(input_data)
 
-    if response.status_code == 200:
-        result = response.json()
-        churn = result["churn_prediction"]
-        prob = result["churn_probability"]
+    prediction = model.predict(processed_data)[0]
+    probability = model.predict_proba(processed_data)[0][1]
 
-        if churn == 1:
-            st.error(f"⚠️ Customer is likely to churn")
-            st.metric("Churn Probability", f"{prob:.2%}")
-        else:
-            st.success(f"✅ Customer is likely to stay")
-            st.metric("Churn Probability", f"{prob:.2%}")
+    if prediction == 1:
+        st.error("⚠️ Customer is likely to churn")
+        st.metric("Churn Probability", f"{probability:.2%}")
     else:
-        st.warning("API error. Make sure FastAPI is running.")
+        st.success("✅ Customer is likely to stay")
+        st.metric("Churn Probability", f"{probability:.2%}")
