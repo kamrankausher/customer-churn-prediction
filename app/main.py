@@ -5,16 +5,16 @@ import joblib
 import os
 
 # --------------------------------------------------
-# Get project root directory (Render-safe)
+# Resolve project root dynamically (Render-safe)
 # --------------------------------------------------
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 
-PREPROCESSOR_PATH = os.path.join(MODEL_DIR, "preprocessor.pkl")
-MODEL_PATH = os.path.join(MODEL_DIR, "random_forest.pkl")
+PREPROCESSOR_PATH = os.path.join(MODELS_DIR, "preprocessor.pkl")
+MODEL_PATH = os.path.join(MODELS_DIR, "random_forest.pkl")
 
 # --------------------------------------------------
-# Load ML artifacts
+# Load artifacts
 # --------------------------------------------------
 preprocessor = joblib.load(PREPROCESSOR_PATH)
 model = joblib.load(MODEL_PATH)
@@ -22,10 +22,7 @@ model = joblib.load(MODEL_PATH)
 # --------------------------------------------------
 # FastAPI app
 # --------------------------------------------------
-app = FastAPI(
-    title="Customer Churn Prediction API",
-    version="1.0"
-)
+app = FastAPI(title="Customer Churn Prediction API")
 
 # --------------------------------------------------
 # Input schema
@@ -66,10 +63,10 @@ def predict_churn(customer: CustomerData):
     input_df = pd.DataFrame([customer.dict()])
     processed = preprocessor.transform(input_df)
 
-    prediction = model.predict(processed)[0]
-    probability = model.predict_proba(processed)[0][1]
+    prediction = int(model.predict(processed)[0])
+    probability = float(model.predict_proba(processed)[0][1])
 
     return {
-        "churn_prediction": int(prediction),
-        "churn_probability": round(float(probability), 4)
+        "churn_prediction": prediction,
+        "churn_probability": round(probability, 4)
     }
